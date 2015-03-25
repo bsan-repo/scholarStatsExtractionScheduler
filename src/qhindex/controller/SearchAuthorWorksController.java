@@ -166,7 +166,7 @@ public class SearchAuthorWorksController{
     
     // Attempt to retrieve a web document in particular set up for google scholar 
     // which is known to denied requests after 100 request have been done.
-    private Document requestWebDocFromScholar(String url, int attempts, boolean wait){
+    private synchronized Document requestWebDocFromScholar(String url, int attempts, boolean wait){
         int attemptsToRetrieveResource = attempts;
         Document doc = null;
         for(int i = 0; i < attemptsToRetrieveResource; i++){
@@ -183,7 +183,7 @@ public class SearchAuthorWorksController{
                     // Wait one day before continue search
                     if(wait == true){
                         try{
-                            wait(10000*60*60*24);
+                            wait(1000*60*60*24);
                         }catch(InterruptedException iex){
                             Debug.print("Exception while waiting to continue search after a 503 response: "+iex.toString());
                             resultsMsg += "Exception while waiting to continue search after a 503 response.\n";
@@ -194,6 +194,12 @@ public class SearchAuthorWorksController{
                     break;
                 }
             }catch(IOException ioex){
+                        try{
+                            wait(1000);//*60*60*24);
+                        }catch(InterruptedException iex){
+                            Debug.print("Exception while waiting to continue search after a 503 response: "+iex.toString());
+                            resultsMsg += "Exception while waiting to continue search after a 503 response.\n";
+                        }
                 Debug.print("Exception while retrieving scholar web page: "+ioex.toString());
                 resultsMsg += "Exception while retrieving scholar web page.\n";
             }
@@ -209,10 +215,10 @@ public class SearchAuthorWorksController{
     private boolean searchWebAuthorWorks(String authorUrl, ArrayList<AuthorWork> results){
             Debug.info("Searching author works");
             int page = 0;
-            boolean continueSearch = true;
-            while(continueSearch){
+            // Search only for the first 200 works since no author has an h-index bigger of 200 according to observations
+            for(int i = 0; i < 2; i++){
                 int maxRecordsPerPage = 100; // Max number of records allow to be retrieved at a time by google scholar
-                String resultIndex = "&cstart="+(page*maxRecordsPerPage)+"&pagesize="+(page*maxRecordsPerPage+maxRecordsPerPage);
+                String resultIndex = "&cstart="+(page*maxRecordsPerPage)+"&pagesize="+maxRecordsPerPage;
 
                 Document authorDoc = requestWebDocFromScholar("https://scholar.google.com.au"+authorUrl+resultIndex);
                 
@@ -231,7 +237,6 @@ public class SearchAuthorWorksController{
                     }
                 }
                 page += 1;
-                continueSearch = false;
             }
 
         return true;

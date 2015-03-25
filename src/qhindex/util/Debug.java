@@ -25,9 +25,9 @@ public class Debug {
     
     public static String getCacheServerURL(){
         //if(debugMode == true){
-            return "http://localhost:8888";
+        //    return "http://localhost:8888";
         //}else{
-        //    return "http://ec2-52-0-126-95.compute-1.amazonaws.com";
+            return "http://ec2-52-0-126-95.compute-1.amazonaws.com";
         //}
     }
 }
